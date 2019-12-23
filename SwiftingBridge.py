@@ -1,17 +1,21 @@
 import sys
 import subprocess
 from os import devnull
+import binascii
 
 out = None
 f = None
 definedTypes = []
 
 def generateHeader(appPath, appName):
+    if appPath[-1:] == " ":
+        appPath = appPath[:-1]
+
     if appPath[-1:] == "/":
         appPath = appPath[:-1]
     
     if appPath[-4:] != ".app":
-        print "Invalid application path"
+        print("Invalid application path")
         exit()
     
     FNULL = open(devnull, "w")
@@ -54,7 +58,7 @@ def isEnum(line):
         if "'" in line:
             out.write("NSInteger ")
         else:
-            print "Warning: Must give type to enum " + enumName
+            print("Warning: Must give type to enum " + enumName)
         
         out.write("{\n")
         while not "};" in line:
@@ -64,7 +68,7 @@ def isEnum(line):
                 text = line[line.find("'") + 1:line.rfind("'")]
                 out.write("\tcase ")
                 out.write(line[1:line.find(" = ") + 3])
-                out.write("0x" + text.encode("hex"))
+                out.write("0x" + str(binascii.b2a_hex(text.encode())))
                 out.write(line[line.rfind("'")+1:])
             else:
                 if " = " in line:
@@ -94,7 +98,7 @@ def isInterface(line):
         out.write(" {\n")
         
         if interfaceName in definedTypes:
-            print "Warning: protocol for type '" + interfaceName + "' defined multiple times"
+            print("Warning: protocol for type '" + interfaceName + "' defined multiple times")
         
         definedTypes.append(interfaceName)
         
@@ -263,8 +267,8 @@ def handleLine(line):
                         if not isFunction(statements[0]):
                             if not isEmptyLine(statements[0]):
                                 if not isJunkLine(statements[0]):
-                                    print "Here there be dragons:"
-                                    print line
+                                    print("Here there be dragons:")
+                                    print(line)
 
     #handle any extra statements in same line
     if len(statements) > 1:
@@ -272,15 +276,15 @@ def handleLine(line):
 
 
 if len(sys.argv) <= 1:
-    appPath = raw_input("Application path: ")
-    appName = raw_input("Application name: ")
+    appPath = input("Application path: ")
+    appName = input("Application name: ")
 
 elif len(sys.argv) == 3:
     appPath = sys.argv[1]
     appName = sys.argv[2]
 
 else:
-    print "Invalid number of arguments"
+    print("Invalid number of arguments")
 
 generateHeader(appPath, appName)
 out = open(appName + ".swift", "w")
